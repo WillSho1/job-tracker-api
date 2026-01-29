@@ -1,11 +1,19 @@
-import { pgTable, serial, varchar, text, date, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, varchar, text, date, timestamp, integer } from "drizzle-orm/pg-core";
+
+export const applicationStatusEnum = pgEnum("application_status", [
+  "applied",
+  "interviewing",
+  "rejected",
+  "offer",
+  "accepted",
+]);
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
   company: varchar("company", { length: 255 }).notNull(),
   role: varchar("role", { length: 255 }).notNull(),
   url: text("url"),
-  status: varchar("status", { length: 50 }).default("applied"),
+  status: applicationStatusEnum("status").default("applied"),
   appliedDate: date("applied_date").defaultNow(),
   lastContact: date("last_contact"),
   notes: text("notes"),
