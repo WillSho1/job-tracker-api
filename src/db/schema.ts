@@ -23,11 +23,17 @@ export const applications = pgTable("applications", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const leetcodeDifficultyEnum = pgEnum("leetcode_difficulty", [
+  "easy",
+  "medium",
+  "hard",
+]);
+
 export const leetcode = pgTable("leetcode", {
   id: serial("id").primaryKey(),
   problemName: varchar("problem_name", { length: 255 }).notNull(),
   problemNumber: integer("problem_number"),
-  difficulty: varchar("difficulty", { length: 20 }),
+  difficulty: leetcodeDifficultyEnum("difficulty"),
   topics: text("topics"), // Store as JSON string for simplicity
   solvedDate: date("solved_date").defaultNow(),
   timeMinutes: integer("time_minutes"),
