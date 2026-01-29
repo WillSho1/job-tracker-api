@@ -29,7 +29,7 @@ app.post("/", async (c) => {
   const parsed = createSchema.safeParse(body);
 
   if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
+    return c.json({ error: parsed.error.issues }, 400);
   }
 
   const [result] = await db.insert(applications).values(parsed.data).returning();
@@ -55,43 +55,10 @@ app.get("/", async (c) => {
   return c.json(results);
 });
 
-// Get single application
-app.get("/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
-  const [result] = await db.select().from(applications).where(eq(applications.id, id));
-
-  if (!result) {
-    return c.json({ error: "Application not found" }, 404);
-  }
-  return c.json(result);
-});
-
-// Update application
-app.patch("/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
-  const body = await c.req.json();
-  const parsed = updateSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
-  }
-
-  const [result] = await db
-    .update(applications)
-    .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(applications.id, id))
-    .returning();
-
-  if (!result) {
-    return c.json({ error: "Application not found" }, 404);
-  }
-  return c.json({ message: "Updated", application: result });
-});
-
 // Stats
 app.get("/stats/summary", async (c) => {
   const total = await db.select({ count: sql<number>`count(*)` }).from(applications);
-
+  
   const byStatus = await db
     .select({
       status: applications.status,
@@ -100,10 +67,43 @@ app.get("/stats/summary", async (c) => {
     .from(applications)
     .groupBy(applications.status);
 
-  return c.json({
-    total: total[0].count,
-    byStatus: Object.fromEntries(byStatus.map((s) => [s.status, s.count])),
+    return c.json({
+      total: total[0].count,
+      byStatus: Object.fromEntries(byStatus.map((s) => [s.status, s.count])),
+    });
   });
-});
+  
+  // Get single application
+  app.get("/:id", async (c) => {
+    const id = parseInt(c.req.param("id"));
+    const [result] = await db.select().from(applications).where(eq(applications.id, id));
+  
+    if (!result) {
+      return c.json({ error: "Application not found" }, 404);
+    }
+    return c.json(result);
+  });
+  
+  // Update application
+  app.patch("/:id", async (c) => {
+    const id = parseInt(c.req.param("id"));
+    const body = await c.req.json();
+    const parsed = updateSchema.safeParse(body);
+  
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.issues }, 400);
+    }
+  
+    const [result] = await db
+      .update(applications)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(eq(applications.id, id))
+      .returning();
+  
+    if (!result) {
+      return c.json({ error: "Application not found" }, 404);
+    }
+    return c.json({ message: "Updated", application: result });
+  });
 
-export default app;
+  export default app;

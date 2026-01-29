@@ -22,7 +22,7 @@ app.post("/", async (c) => {
   const parsed = createSchema.safeParse(body);
 
   if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
+    return c.json({ error: parsed.error.issues }, 400);
   }
 
   const { topics, ...rest } = parsed.data;
